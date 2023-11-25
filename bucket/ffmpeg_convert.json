@@ -1,0 +1,10 @@
+{
+  "exts": ["mp4", "mov", "avi"],
+  "defs": {
+    "Convert": {
+      "to mp4": {
+        "script": "convert.bat"
+      }
+    }
+  }
+}

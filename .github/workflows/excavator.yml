@@ -1,0 +1,18 @@
+name: Excavator
+
+on:
+  push:
+    paths:
+      - "bucket/*"
+    branches:
+      - main
+
+jobs:
+  excavate:
+    name: Excavate
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@main
+      - name: Excavate
+        run: |
+          python bin/generate.py
