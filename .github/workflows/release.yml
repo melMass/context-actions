@@ -28,8 +28,7 @@ jobs:
 
       - name: 📦 Create Archive
         run: |
-          Compress-Archive -Path actions, dist, bucket, *.bat -DestinationPath "context-actions-${{ github.ref_name }}.zip"
-        shell: pwsh
+          zip -r "context-actions-${{ github.ref_name }}.zip" actions dist bucket *.bat
 
       - name: ✅ Create Draft Release
         id: create_release

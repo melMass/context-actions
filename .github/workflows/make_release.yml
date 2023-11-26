@@ -27,16 +27,15 @@ jobs:
 
       - name: Create and Push Tag
         run: |
-          $TAG_EXISTS=$(git tag -l "${{ github.event.inputs.version }}")
-          if [ "$TAG_EXISTS" != "" ]; then
-          if ${{ github.event.inputs.remove_if_existing }}; then
-              echo "Tag exists, removing..."
-              git tag -d ${{ github.event.inputs.version }}
-              git push --delete origin ${{ github.event.inputs.version }}
+          if git rev-parse --quiet --verify "${{ github.event.inputs.version }}"; then
+          if [ "${{ github.event.inputs.remove_if_existing }}" = "true" ]; then
+          echo "Tag exists, removing..."
+          git tag -d ${{ github.event.inputs.version }}
+          git push --delete origin ${{ github.event.inputs.version }}
           else
-              echo "Tag already exists. Exiting..."
-              exit 1
-          fi
+          echo "Tag already exists. Exiting..."
+          exit 1
+              fi
           fi
           git tag ${{ github.event.inputs.version }}
           git push origin ${{ github.event.inputs.version }}
