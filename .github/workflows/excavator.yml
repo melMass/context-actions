@@ -17,6 +17,8 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
       - name: Check Modified Files
         id: modified_files
         uses: ./.github/actions/check-modified
