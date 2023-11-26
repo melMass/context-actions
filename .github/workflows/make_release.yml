@@ -6,10 +6,16 @@ on:
       version:
         description: "Release Version (e.g., v1.0.0)"
         required: true
-
+      remove_if_existing:
+        description: "Remove tag if it already exists"
+        required: true
+        default: false
+        type: boolean
 jobs:
   create-and-push-tag:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
@@ -21,5 +27,16 @@ jobs:
 
       - name: Create and Push Tag
         run: |
+          $TAG_EXISTS=$(git tag -l "${{ github.event.inputs.version }}")
+          if [ "$TAG_EXISTS" != "" ]; then
+          if ${{ github.event.inputs.remove_if_existing }}; then
+              echo "Tag exists, removing..."
+              git tag -d ${{ github.event.inputs.version }}
+              git push --delete origin ${{ github.event.inputs.version }}
+          else
+              echo "Tag already exists. Exiting..."
+              exit 1
+          fi
+          fi
           git tag ${{ github.event.inputs.version }}
           git push origin ${{ github.event.inputs.version }}
