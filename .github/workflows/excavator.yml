@@ -6,7 +6,8 @@ on:
       - ".github/**/*.yml"
       - "bucket/*.json"
       - "bin/generate.py"
-
+    tags:
+      - "v*"
     branches:
       - main
 
@@ -21,11 +22,13 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+
       - name: Check Modified Files
         id: modified_files
         uses: ./.github/actions/check-modified
         with:
           glob_pattern: "bucket/*.json"
+
       - name: Excavate
         if: steps.modified_files.outputs.files_changed == 'true'
         run: |
@@ -35,21 +38,3 @@ jobs:
           do
             python bin/generate.py "$file"
           done
-
-      - name: Create Archive
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          Compress-Archive -Path actions, dist, *.bat -DestinationPath "context-actions-${{ github.ref_name }}.zip"
-
-      - name: Create Draft Release
-        id: create_release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          files: |
-            ./context-actions-${{ github.ref_name }}.zip
