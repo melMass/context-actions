@@ -19,7 +19,11 @@ runs:
 
     - name: 📦 Create Archive
       run: |
-        zip -r "context-actions-${{ inputs.version }}.zip" actions dist bucket *.bat
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          "C:/Program Files/7-Zip/7z.exe" a -mfb=258 -tzip "context-actions-${{ inputs.version }}.zip"  actions dist bucket *.bat
+        else
+          zip -r -9 -y -m "context-actions-${{ inputs.version }}.zip" actions dist bucket *.bat
+        fi
       shell: bash
 
     - name: ✅ Create Draft Release
