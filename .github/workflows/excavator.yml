@@ -12,6 +12,9 @@ jobs:
   excavate:
     name: Excavate
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@main
       - name: Excavate
