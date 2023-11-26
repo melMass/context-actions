@@ -1,0 +1,41 @@
+name: "Make Release"
+description: 'Performs build and prepares for release'
+inputs:
+  version:
+    description: 'Release version'
+    required: true
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: ♻️ Checking out the repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: 🤖 Excavate
+      run: |
+        for file in bucket/*.json
+        do
+          python bin/generate.py "$file" --version "${{ inputs.version }}"
+        done
+      shell: bash
+
+    - name: 📦 Create Archive
+      run: |
+        zip -r "context-actions-${{ inputs.version }}.zip" actions dist bucket *.bat
+      shell: bash
+
+    - name: ✅ Create Draft Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      shell: bash
+      with:
+        tag_name: ${{ inputs.version }}
+        name: Release ${{ inputs.version }}
+        draft: true
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          ./context-actions-${{ inputs.version }}.zip
