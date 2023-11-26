@@ -17,19 +17,16 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@main
-      - name: Excavate
-        run: |
-          python bin/generate.py
       - name: Check Modified Files
         id: modified_files
-        uses: ./.github/actions/check-modified-files
+        uses: ./.github/actions/check-modified
         with:
           glob_pattern: "bucket/*.json"
       - name: Excavate
         if: steps.modified_files.outputs.files_changed == 'true'
         run: |
           modified_files=(${{ steps.modified_files.outputs.modified_files }})
-          echo "$modified_files"
+          echo "MODIFIED FILES: $modified_files"
           for file in "${modified_files[@]}"
           do
             python bin/generate.py "$file"

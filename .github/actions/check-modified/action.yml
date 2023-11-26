@@ -18,10 +18,49 @@ runs:
       id: check_files
       shell: bash
       run: |
-        modified_files=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep -E "${{ inputs.glob_pattern }}")
-        echo "modified_files=$modified_files" >> $GITHUB_ENV
-        echo "::set-output name=modified_files::$modified_files"
-        if [ -z "$modified_files" ]; then
+        # get git modified files
+        if [ -z "${{ github.event.before }}" ] || [ "${{ github.event.before }}" == "${{ github.sha }}" ]; then
+          # Fallback: Compare the most recent commit with its immediate parent
+          base_sha="HEAD^"
+        else
+          base_sha="${{ github.event.before }}"
+        fi
+
+        printf "\033[1;33mAll modified files:\033[0m\n"
+        git diff --name-only $base_sha ${{ github.sha }}
+        echo "---------------------"
+
+        # get all files in the repository matching the glob pattern
+        all_matching_files=$(find . -type f -iwholename "./${{ inputs.glob_pattern }}")
+        printf "\033[1;33mAll files in the repository matching '${{ inputs.glob_pattern }}':\033[0m\n"
+        echo "$all_matching_files"
+        echo "---------------------"
+
+        modified_matching_files=""
+
+        # filter modified based on the glob pattern
+        while IFS= read -r line; do
+          if echo "$all_matching_files" | grep -qxF "./$line"; then
+            modified_matching_files+="$line "
+          fi
+        done < <(git diff --name-only $base_sha ${{ github.sha }})
+
+        IFS=' ' read -r -a match_array <<< "$modified_matching_files"
+
+        num_matches=${#match_array[@]}
+
+        if [ "$num_matches" -eq 0 ]; then
+            printf "\033[1;31mNo match found\033[0m\n"
+        else
+            printf "\033[1;32mFound %d Match(es)\033[0m\n" "$num_matches"
+            echo $modified_matching_files
+        fi
+
+        # set outputs
+        echo "::set-output name=modified_files::$modified_matching_files"
+
+        if [ -z "$modified_matching_files" ]; then
+          printf "\033[1;31mNo match found\033[0m\n"
           echo "::set-output name=files_changed::false"
         else
           echo "::set-output name=files_changed::true"
