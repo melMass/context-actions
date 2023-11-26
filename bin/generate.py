@@ -133,6 +133,11 @@ def create_uninstall_reg_file(prefix, extensions, version):
                     sub_command = f"{NAMESPACE}.{menu_name}.{action}"
                     file.write(f"[-{key_base}\\shell\\{sub_command}]\n")
 
+        file.write(f"[-HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}\\Version]\n")
+        file.write(f"[-HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}]\n")
+
+    return file_name
+
 
 def create_batch_files(
     prefix, install_reg, uninstall_reg, script_dir, target_dir, version
@@ -150,7 +155,7 @@ def create_batch_files(
         # file.write(")\n")
         check_version_script = check_version_in_registry(prefix)
         file.write(f"{check_version_script}\n")
-        file.write("IF %ERRORLEVEL% EQU 1 (\n")
+        file.write("IF %ERRORLEVEL% NEQ 1 (\n")
         file.write(
             f"    ECHO A version of {prefix} is already installed. Please uninstall the previous version before installing a new one.\n"
         )
@@ -197,7 +202,7 @@ def create_batch_files(
 
         check_version_script = check_version_in_registry(prefix)
         file.write(f"{check_version_script}\n")
-        file.write("IF %ERRORLEVEL% EQU 0 (\n")
+        file.write("IF %ERRORLEVEL% NEQ 0 (\n")
         file.write(f"    ECHO No installation of {prefix} found. Aborting.")
         file.write("    pause\n")
         file.write("    exit /b 1\n")
@@ -221,9 +226,13 @@ def check_version_in_registry_strict(prefix, version):
     return check_version_script
 
 
+# def check_version_in_registry(prefix):
+#     reg_base_key = f"HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}"
+#     check_version_script = f"PowerShell -Command \"& {{if (Test-Path 'Registry::{reg_base_key}') {{exit 1}} else {{exit 0}} }}\""
+#     return check_version_script
 def check_version_in_registry(prefix):
     reg_base_key = f"HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}"
-    check_version_script = f"PowerShell -Command \"& {{if (Test-Path 'Registry::{reg_base_key}') {{exit 1}} else {{exit 0}} }}\""
+    check_version_script = f'reg query "{reg_base_key}" >nul 2>&1'
     return check_version_script
 
 
