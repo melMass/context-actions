@@ -16,28 +16,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - name: ♻️ Checking out the repository
-        uses: actions/checkout@v3
-
-      - name: 🤖 Excavate
-        run: |
-          for file in bucket/*.json
-          do
-            python bin/generate.py "$file" --version "${{ github.ref_name }}"
-          done
-
-      - name: 📦 Create Archive
-        run: |
-          zip -r "context-actions-${{ github.ref_name }}.zip" actions dist bucket *.bat
-
-      - name: ✅ Create Draft Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Release Process Workflow
+        uses: ./.github/workflows/release-process.yml
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: true
-          prerelease: false
-          generate_release_notes: true
-          files: |
-            ./context-actions-${{ github.ref_name }}.zip
+          version: ${{ github.ref_name }}

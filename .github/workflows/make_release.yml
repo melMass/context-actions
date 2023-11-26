@@ -42,3 +42,8 @@ jobs:
           fi
           git tag ${{ github.event.inputs.version }}
           git push origin ${{ github.event.inputs.version }}
+
+      - name: Release Process Workflow
+        uses: ./.github/workflows/release-process.yml
+        with:
+          version: ${{ github.event.inputs.version }}
