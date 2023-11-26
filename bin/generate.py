@@ -1,7 +1,7 @@
 from pathlib import Path
 
 NAMESPACE = "mtbContext"
-VERSION = "0.0.1"
+VERSION = "v0.0.1"
 
 
 # region methods
@@ -71,11 +71,11 @@ def create_root_menu_key(
     return "\n".join(filter(None, entries))
 
 
-def create_reg_file(prefix, extensions, install_dir="C:\\context-actions"):
+def create_reg_file(prefix, extensions, version, install_dir="C:\\context-actions"):
     install_dir = Path(install_dir)
     actions_dir = install_dir / "actions"
 
-    file_name = f"dist/install_{prefix}_context_menu.reg"
+    file_name = f"dist/install_{prefix}_context_menu_v{version}.reg"
 
     with open(file_name, "w") as file:
         file.write("Windows Registry Editor Version 5.00\n\n")
@@ -106,9 +106,11 @@ def create_reg_file(prefix, extensions, install_dir="C:\\context-actions"):
                     )
                     file.write(subcommand_key + "\n\n")
 
+    return file_name
 
-def create_uninstall_reg_file(prefix, extensions):
-    file_name = f"dist/uninstall_{prefix}_context_menu.reg"
+
+def create_uninstall_reg_file(prefix, extensions, version):
+    file_name = f"dist/uninstall_{prefix}_context_menu_v{version}.reg"
 
     with open(file_name, "w") as file:
         file.write("Windows Registry Editor Version 5.00\n\n")
@@ -133,10 +135,10 @@ def create_uninstall_reg_file(prefix, extensions):
 
 
 def create_batch_files(
-    prefix, install_reg, uninstall_reg, script_dir, target_dir, ps_script
+    prefix, install_reg, uninstall_reg, script_dir, target_dir, version
 ):
     # Create install.bat
-    with open(f"install_{prefix}.bat", "w") as file:
+    with open(f"install_{prefix}_v{version}.bat", "w") as file:
         file.write("@echo off\n")
 
         # check_version_script = check_version_in_registry_strict(prefix)
@@ -180,12 +182,13 @@ def create_batch_files(
 
         # import the install reg file
         file.write(f'reg import "{install_reg}"\n')
-        file.write(set_version_in_registry(prefix))
+        reg_version_key = f"HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}\\Version"
+        file.write(f'reg add "{reg_version_key}" /v "Version" /d "{version}" /f\n')
         file.write("echo Installation complete.\n")
         file.write("pause\n")
 
     # Create uninstall.bat
-    with open(f"uninstall_{prefix}.bat", "w") as file:
+    with open(f"uninstall_{prefix}_v{version}.bat", "w") as file:
         file.write("@echo off\n")
         # Move scripts to trash using PowerShell
         # file.write(
@@ -205,9 +208,6 @@ def create_batch_files(
         file.write("pause\n")
 
 
-# endregion
-
-
 def import_definitions(file_name):
     import json
 
@@ -215,14 +215,9 @@ def import_definitions(file_name):
         return json.load(file)
 
 
-def set_version_in_registry(prefix):
+def check_version_in_registry_strict(prefix, version):
     reg_version_key = f"HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}\\Version"
-    return f'reg add "{reg_version_key}" /v "Version" /d "{VERSION}" /f\n'
-
-
-def check_version_in_registry_strict(prefix):
-    reg_version_key = f"HKEY_CURRENT_USER\\Software\\{NAMESPACE}.{prefix}\\Version"
-    check_version_script = f"PowerShell -Command \"& {{if ((Get-ItemProperty -Path 'Registry::{reg_version_key}' -Name Version -ErrorAction SilentlyContinue).Version -eq '{VERSION}') {{exit 1}} else {{exit 0}} }}\""
+    check_version_script = f"PowerShell -Command \"& {{if ((Get-ItemProperty -Path 'Registry::{reg_version_key}' -Name Version -ErrorAction SilentlyContinue).Version -eq '{version}') {{exit 1}} else {{exit 0}} }}\""
     return check_version_script
 
 
@@ -245,6 +240,8 @@ def old_version_check(file, prefix):
     file.write(")\n")
 
 
+# endregion
+
 if __name__ == "__main__":
     import argparse
     from pathlib import Path
@@ -253,6 +250,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("context menu generator")
     parser.add_argument("definition_file", help="path to definition file")
+    parser.add_argument("--version", default=VERSION, help="the version to generate")
 
     args = parser.parse_args()
     def_file = Path(args.definition_file)
@@ -260,23 +258,21 @@ if __name__ == "__main__":
         print(f"Definition file {def_file} does not exist.")
 
     file_associations = import_definitions(args.definition_file)
+    version = args.version[1:] if args.version.startswith("v") else args.version
+    prefix = def_file.stem
 
-    create_reg_file(
-        def_file.stem,
-        file_associations,
-    )
-    create_uninstall_reg_file(
-        def_file.stem,
-        file_associations,
-    )
+    print(f"Generating install files for {NAMESPACE}.{prefix} v{version}")
+
+    install_reg = create_reg_file(prefix, file_associations, version)
+    uninstall_reg = create_uninstall_reg_file(prefix, file_associations, version)
 
     create_batch_files(
-        def_file.stem,
-        install_reg=f"dist/install_{def_file.stem}_context_menu.reg",
-        uninstall_reg=f"dist/uninstall_{def_file.stem}_context_menu.reg",
+        prefix,
+        install_reg,
+        uninstall_reg,
         script_dir="actions",
         target_dir="C:\\context-actions",
-        ps_script="move_to_trash.ps1",
+        version=version,
     )
 
-    print(f"Installation and uninstallation .reg files for {def_file.stem} created.")
+    print(f"Installation and uninstallation files for {prefix} created.")

@@ -19,7 +19,7 @@ jobs:
         run: |
           for file in bucket/*.json
           do
-            python bin/generate.py "$file"
+            python bin/generate.py "$file" --version "${{ github.ref_name }}"
           done
 
       - name: Create Archive
