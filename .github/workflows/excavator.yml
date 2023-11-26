@@ -28,7 +28,9 @@ jobs:
       - name: Excavate
         if: steps.modified_files.outputs.files_changed == 'true'
         run: |
-          for file in ${{ steps.modified_files.outputs.modified_files }}
+          modified_files=(${{ steps.modified_files.outputs.modified_files }})
+          echo "$modified_files"
+          for file in "${modified_files[@]}"
           do
             python bin/generate.py "$file"
           done
