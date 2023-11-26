@@ -1,0 +1,28 @@
+name: "Check Modified Files"
+description: "Checks for modified files matching a specified glob pattern"
+inputs:
+  glob_pattern:
+    description: "Glob pattern to match files (including path)"
+    required: true
+outputs:
+  modified_files:
+    description: "List of modified files matching the glob pattern"
+    value: ${{ steps.check_files.outputs.modified_files }}
+  files_changed:
+    description: "Boolean indicating if files were changed"
+    value: ${{ steps.check_files.outputs.files_changed }}
+runs:
+  using: "composite"
+  steps:
+    - name: Check for modified files
+      id: check_files
+      shell: bash
+      run: |
+        modified_files=$(git diff --name-only ${{ github.sha }} ${{ github.event.before }} | grep -E "${{ inputs.glob_pattern }}")
+        echo "modified_files=$modified_files" >> $GITHUB_ENV
+        echo "::set-output name=modified_files::$modified_files"
+        if [ -z "$modified_files" ]; then
+          echo "::set-output name=files_changed::false"
+        else
+          echo "::set-output name=files_changed::true"
+        fi

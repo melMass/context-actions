@@ -3,7 +3,7 @@ name: Excavator
 on:
   push:
     paths:
-      - "bucket/*"
+      - "bucket/*.json"
     branches:
       - main
 
@@ -16,3 +16,15 @@ jobs:
       - name: Excavate
         run: |
           python bin/generate.py
+      - name: Check Modified Files
+        id: modified_files
+        uses: ./.github/actions/check-modified-files
+        with:
+          glob_pattern: "bucket/*.json"
+      - name: Excavate
+        if: steps.modified_files.outputs.files_changed == 'true'
+        run: |
+          for file in ${{ steps.modified_files.outputs.modified_files }}
+          do
+            python bin/generate.py "$file"
+          done
