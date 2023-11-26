@@ -3,6 +3,7 @@ name: Excavator
 on:
   push:
     paths:
+      - ".github/**/*.yml"
       - "bucket/*.json"
     branches:
       - main
