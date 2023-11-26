@@ -57,11 +57,10 @@ runs:
         fi
 
         # set outputs
-        echo "::set-output name=modified_files::$modified_matching_files"
+        echo "modified_files=$modified_matching_files" >> $GITHUB_OUTPUT
 
         if [ -z "$modified_matching_files" ]; then
-          printf "\033[1;31mNo match found\033[0m\n"
-          echo "::set-output name=files_changed::false"
+          echo ":files_changed=false"  >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=files_changed::true"
+          echo ":files_changed=true"  >> $GITHUB_OUTPUT
         fi
