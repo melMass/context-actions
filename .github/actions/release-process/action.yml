@@ -25,7 +25,6 @@ runs:
     - name: ✅ Create Draft Release
       id: create_release
       uses: softprops/action-gh-release@v1
-      shell: bash
       with:
         tag_name: ${{ inputs.version }}
         name: Release ${{ inputs.version }}
