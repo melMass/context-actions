@@ -6,8 +6,6 @@ on:
       - ".github/**/*.yml"
       - "bucket/*.json"
       - "bin/generate.py"
-    tags:
-      - "v*"
     branches:
       - main
 
@@ -19,17 +17,18 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - name: ♻️ Checking out the repository (depth 0)
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Check Modified Files
+      - name: 🔎 Check Modified Files
         id: modified_files
         uses: ./.github/actions/check-modified
         with:
           glob_pattern: "bucket/*.json"
 
-      - name: Excavate
+      - name: 🤖 Excavate
         if: steps.modified_files.outputs.files_changed == 'true'
         run: |
           modified_files=(${{ steps.modified_files.outputs.modified_files }})

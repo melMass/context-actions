@@ -7,27 +7,31 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
+
     name: Create Release
     runs-on: windows-latest
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v3
+      - name: ♻️ Checking out the repository
+        uses: actions/checkout@v3
 
-      - name: Excavate
+      - name: 🤖 Excavate
         run: |
           for file in bucket/*.json
           do
             python bin/generate.py "$file" --version "${{ github.ref_name }}"
           done
 
-      - name: Create Archive
+      - name: 📦 Create Archive
         run: |
           Compress-Archive -Path actions, dist, bucket, *.bat -DestinationPath "context-actions-${{ github.ref_name }}.zip"
         shell: pwsh
 
-      - name: Create Draft Release
+      - name: ✅ Create Draft Release
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
